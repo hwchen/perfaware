@@ -32,16 +32,21 @@ fn void! decode(char[] instrs, String label) {
 			case 0b100010: // mov
 				int d = 0b00000010 & instrs[i];
 				int w = 0b00000001 & instrs[i];
-				// mod always 11 for now, for register-to-register
-				String reg = REGISTERS[(0b00111000 & instrs[i+1]) >> 3][w];
-				String rm = REGISTERS[0b00000111 & instrs[i+1]][w];
-				if (d) {
-					// d bit is 1, reg is destination
-					io::printfn("mov %s, %s", reg, rm);
-				} else {
-					io::printfn("mov %s, %s", rm, reg);
+				// check MOD
+				switch (0b11000000 & instrs[i+1] >> 6) {
+					case 0b11: // register-to-register
+						String reg = REGISTERS[(0b00111000 & instrs[i+1]) >> 3][w];
+						String rm = REGISTERS[0b00000111 & instrs[i+1]][w];
+						if (d) {
+							// d bit is 1, reg is destination
+							io::printfn("mov %s, %s", reg, rm);
+						} else {
+							io::printfn("mov %s, %s", rm, reg);
+						}
+						i += 2;
+					default:
+						$$unreachable();
 				}
-				i += 2;
 			default:
 				io::eprintfn("unrecognized opcode: %b", opcode);
 				return DecodeError.UNRECOGNIZED_OPCODE?;
