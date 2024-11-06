@@ -2,6 +2,7 @@ module sim86;
 
 import std::io;
 import std::io::file;
+import std::core::string;
 
 fn int main(String[] args) {
 	if (args.len != 2) {
@@ -32,20 +33,40 @@ fn void! decode(char[] instrs, String label) {
 			case 0b100010: // mov
 				int d = 0b00000010 & instrs[i];
 				int w = 0b00000001 & instrs[i];
+				String reg = REGISTERS[(0b00111000 & instrs[i+1]) >> 3][w];
+				int rm = 0b00000111 & instrs[i+1];
 				// check MOD
-				switch (0b11000000 & instrs[i+1] >> 6) {
+				int mod = (0b11000000 & instrs[i+1]) >> 6;
+				switch (mod) {
 					case 0b11: // register-to-register
-						String reg = REGISTERS[(0b00111000 & instrs[i+1]) >> 3][w];
-						String rm = REGISTERS[0b00000111 & instrs[i+1]][w];
+						String rrm = REGISTERS[rm][w];
 						if (d) {
 							// d bit is 1, reg is destination
-							io::printfn("mov %s, %s", reg, rm);
+							io::printfn("mov %s, %s", reg, rrm);
 						} else {
-							io::printfn("mov %s, %s", rm, reg);
+							io::printfn("mov %s, %s", rrm, reg);
 						}
 						i += 2;
 					default:
-						$$unreachable();
+						int address_const;
+						switch (mod) {
+							case 0b00: address_const = 0;
+							case 0b01: address_const = (int)instrs[i+2];
+							case 0b10: address_const = (int)instrs[i+2] + (instrs[i+3] << 8);
+						}
+						String address_format = EFFECTIVE_ADDRESS[rm][(int)(mod>=1)];
+						String address = string::tformat(address_format, address_const);
+						if (d) {
+							// d bit is 1, reg is destination
+							io::printfn("mov %s, %s", reg, address);
+						} else {
+							io::printfn("mov %s, %s", address, reg);
+						}
+						switch (mod) {
+							case 0b00: i += 2;
+							case 0b01: i += 3 + w;
+							case 0b10: i += 4;
+						}
 				}
 			default:
 				io::eprintfn("unrecognized opcode: %b", opcode);
@@ -71,4 +92,21 @@ const RegisterFieldEncoding[] REGISTERS = {
 	[0b101] = { "ch", "bp" },
 	[0b110] = { "dh", "si" },
 	[0b111] = { "bh", "di" },
+};
+
+
+distinct EffectiveAddressCalc = String[2];
+
+// [R/M] = { MOD=00, MOD=01, MOD=10 }
+// MOD=01: + D8
+// MOD=10: + D16
+const EffectiveAddressCalc[] EFFECTIVE_ADDRESS = {
+	[0b000] = { "[BX+SI]", "[BX+SI+%d]" },
+	[0b001] = { "[BX+DI]", "[BX+DI+%d]" },
+	[0b010] = { "[BP+SI]", "[BP+SI+%d]" },
+	[0b011] = { "[BP+DI]", "[BP+DI+%d]" },
+	[0b100] = { "[SI]",    "[SI+%d]" },
+	[0b101] = { "[DI]",    "[DI+%d]" },
+	[0b110] = { "[%d]",    "[BP+%d]" },
+	[0b111] = { "[BX]",    "[BX+%d]" },
 };
