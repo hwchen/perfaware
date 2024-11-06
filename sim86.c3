@@ -36,9 +36,9 @@ fn void! decode(char[] instrs, String label) {
 		String rm = REGISTERS[0b00000111 & instrs[1]][w];
 		if (d) {
 			// d bit is 1, reg is destination
-			io::printfn("mov %s %s", reg, rm);
+			io::printfn("mov %s, %s", reg, rm);
 		} else {
-			io::printfn("mov %s %s", rm, reg);
+			io::printfn("mov %s, %s", rm, reg);
 		}
 	}
 }
