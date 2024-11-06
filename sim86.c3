@@ -27,20 +27,31 @@ const char MOVE_MASK = 0b100010;
 
 fn void! decode(char[] instrs, String label) {
 	io::printfn("; %s disassembly:\nbits 16", label);
-	if (MOVE_MASK & (instrs[0] >> 2) == MOVE_MASK) {
-		// mov instruction
-		int d = 0b00000010 & instrs[0];
-		int w = 0b00000001 & instrs[0];
-		// mod always 11 for now, for register-to-register
-		String reg = REGISTERS[(0b00111000 & instrs[1]) >> 3][w];
-		String rm = REGISTERS[0b00000111 & instrs[1]][w];
-		if (d) {
-			// d bit is 1, reg is destination
-			io::printfn("mov %s, %s", reg, rm);
+	int i = 0;
+	while (i < instrs.len) {
+		if (MOVE_MASK & (instrs[i] >> 2) == MOVE_MASK) {
+			// mov instruction
+			int d = 0b00000010 & instrs[i];
+			int w = 0b00000001 & instrs[i];
+			// mod always 11 for now, for register-to-register
+			String reg = REGISTERS[(0b00111000 & instrs[i+1]) >> 3][w];
+			String rm = REGISTERS[0b00000111 & instrs[i+1]][w];
+			if (d) {
+				// d bit is 1, reg is destination
+				io::printfn("mov %s, %s", reg, rm);
+			} else {
+				io::printfn("mov %s, %s", rm, reg);
+			}
+			i += 2;
 		} else {
-			io::printfn("mov %s, %s", rm, reg);
+			io::eprintfn("instruction: %b", instrs[i]);
+			return DecodeError.UNRECOGNIZED_INSTRUCTION?;
 		}
 	}
+}
+
+fault DecodeError {
+	UNRECOGNIZED_INSTRUCTION,
 }
 
 // w=0, w=1
