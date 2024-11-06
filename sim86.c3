@@ -22,36 +22,35 @@ fn int main(String[] args) {
 	return 0;
 }
 
-// high bits, need to shift before comparing
-const char MOVE_MASK = 0b100010;
-
 fn void! decode(char[] instrs, String label) {
 	io::printfn("; %s disassembly:\nbits 16", label);
 	int i = 0;
 	while (i < instrs.len) {
-		if (MOVE_MASK & (instrs[i] >> 2) == MOVE_MASK) {
-			// mov instruction
-			int d = 0b00000010 & instrs[i];
-			int w = 0b00000001 & instrs[i];
-			// mod always 11 for now, for register-to-register
-			String reg = REGISTERS[(0b00111000 & instrs[i+1]) >> 3][w];
-			String rm = REGISTERS[0b00000111 & instrs[i+1]][w];
-			if (d) {
-				// d bit is 1, reg is destination
-				io::printfn("mov %s, %s", reg, rm);
-			} else {
-				io::printfn("mov %s, %s", rm, reg);
-			}
-			i += 2;
-		} else {
-			io::eprintfn("instruction: %b", instrs[i]);
-			return DecodeError.UNRECOGNIZED_INSTRUCTION?;
+		// opcode is highest 6 bits of first byte of instruction
+		char opcode = instrs[i] >> 2;
+		switch (opcode) {
+			case 0b100010: // mov
+				int d = 0b00000010 & instrs[i];
+				int w = 0b00000001 & instrs[i];
+				// mod always 11 for now, for register-to-register
+				String reg = REGISTERS[(0b00111000 & instrs[i+1]) >> 3][w];
+				String rm = REGISTERS[0b00000111 & instrs[i+1]][w];
+				if (d) {
+					// d bit is 1, reg is destination
+					io::printfn("mov %s, %s", reg, rm);
+				} else {
+					io::printfn("mov %s, %s", rm, reg);
+				}
+				i += 2;
+			default:
+				io::eprintfn("unrecognized opcode: %b", opcode);
+				return DecodeError.UNRECOGNIZED_OPCODE?;
 		}
 	}
 }
 
 fault DecodeError {
-	UNRECOGNIZED_INSTRUCTION,
+	UNRECOGNIZED_OPCODE,
 }
 
 // w=0, w=1
