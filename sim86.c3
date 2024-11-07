@@ -40,7 +40,7 @@ fn void! decode(char[] instrs, String label) {
 				// check MOD
 				int mod = (0b11000000 & instrs[i+1]) >> 6;
 				switch (mod) {
-					case 0b11: // register-to-register
+					case 0b11: // rm is a register
 						String rrm = REGISTERS[rm][w];
 						if (d) {
 							// d bit is 1, reg is destination
@@ -48,7 +48,7 @@ fn void! decode(char[] instrs, String label) {
 						} else {
 							io::printfn("mov %s, %s", rrm, reg);
 						}
-					default:
+					default: // rm is effective address
 						int address_const;
 						switch (mod) {
 							case 0b00: address_const = 0;
@@ -72,6 +72,41 @@ fn void! decode(char[] instrs, String label) {
 					case 0b11: advance = 2;
 					default: $$unreachable();
 				}
+				$if $feature(DEBUG_TRACE_DECODE):
+					debug_bytes(instrs[i:advance]);
+				$endif
+				i += advance;
+			case instrs[i] >> 1 == 0b1100011: // mov immediate to register/memory
+				int w = 0b00000001 & instrs[i];
+				int rm = 0b00000111 & instrs[i+1];
+				int mod = (0b11000000 & instrs[i+1]) >> 6;
+				int displacement;
+				switch (mod) {
+					case 0b00: displacement = 0;
+					case 0b01: displacement = 1;
+					case 0b10: displacement = 2;
+					case 0b11: displacement = 0;
+					default: $$unreachable();
+				}
+				int immediate = instrs[i+2+displacement];
+				if (w) immediate += (instrs[i+2+displacement] << 8);
+				// check MOD
+				switch (mod) {
+					case 0b11: // rm is a register
+						String rrm = REGISTERS[rm][w];
+						io::printfn("mov %s, %s", rrm, immediate);
+					default: // rm is effective address
+						int address_const;
+						switch (mod) {
+							case 0b00: address_const = 0;
+							case 0b01: address_const = (int)instrs[i+2];
+							case 0b10: address_const = (int)instrs[i+2] + (instrs[i+3] << 8);
+						}
+						String address_format = EFFECTIVE_ADDRESS[rm][(int)(mod>=1)];
+						String address = string::tformat(address_format, address_const);
+						io::printfn("mov %s, %s", address, immediate);
+				}
+				int advance = 2 + displacement + w + 1;
 				$if $feature(DEBUG_TRACE_DECODE):
 					debug_bytes(instrs[i:advance]);
 				$endif
