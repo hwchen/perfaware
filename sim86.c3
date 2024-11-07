@@ -29,12 +29,11 @@ fn void! decode(char[] instrs, String label) {
 	while (i < instrs.len) {
 		$if $feature(DEBUG_TRACE_DECODE):
 			io::eprintfn("<DEBUG> === Start decode one instruction ===");
+			io::eprintfn("<DEBUG> first byte: %08b", instrs[i]);
 		$endif
-		// opcode is highest 6 bits of first byte of instruction
-		char opcode = instrs[i] >> 2;
-		switch (opcode) {
-			case 0b100010: // mov
-				int d = 0b00000010 & instrs[i];
+		switch {
+			case instrs[i] >> 2 == 0b100010: // mov
+				int d = (0b00000010 & instrs[i]) >> 1;
 				int w = 0b00000001 & instrs[i];
 				String reg = REGISTERS[(0b00111000 & instrs[i+1]) >> 3][w];
 				int rm = 0b00000111 & instrs[i+1];
@@ -74,21 +73,21 @@ fn void! decode(char[] instrs, String label) {
 					default: $$unreachable();
 				}
 				$if $feature(DEBUG_TRACE_DECODE):
-					io::printfn("<DEBUG> mod: %b", mod);
-					io::printf("<DEBUG> instruction(%d): %08b", advance, instrs[i]);
-					foreach (byte : instrs[i+1:advance-1]) {
-						io::printf("_%08b", byte);
-					}
-					if (i + advance < instrs.len) {
-						io::printf(" next: %08b", instrs[i+advance]);
-					}
-					io::printn();
+					debug_bytes(instrs[i:advance]);
+				$endif
+				i += advance;
+			case instrs[i] >> 4 == 0b1011: // mov immediate-to-register
+				int w = (0b00001000 & instrs[i]) >> 3;
+				String reg = REGISTERS[0b00000111 & instrs[i]][w];
+				int immediate = (int)instrs[i+1];
+				if (w) immediate += instrs[i+2] << 8;
+				io::printfn("mov %s, %d", reg, immediate);
+				int advance = (w) ? 3 : 2;
+				$if $feature(DEBUG_TRACE_DECODE):
+					debug_bytes(instrs[i:advance]);
 				$endif
 				i += advance;
 			default:
-				$if $feature(DEBUG_TRACE_DECODE):
-					io::eprintfn("<DEBUG> unrecognized opcode: %b", opcode);
-				$endif
 				return DecodeError.UNRECOGNIZED_OPCODE?;
 		}
 		$if $feature(DEBUG_TRACE_DECODE):
@@ -132,3 +131,11 @@ const EffectiveAddressCalc[] EFFECTIVE_ADDRESS = {
 	[0b110] = { "[%d]",    "[BP+%d]" },
 	[0b111] = { "[BX]",    "[BX+%d]" },
 };
+
+fn void debug_bytes(char[] bytes) {
+	io::printf("<DEBUG> bytes(%d): %08b", bytes.len, bytes[0]);
+	foreach (byte : bytes[1..]) {
+		io::printf("_%08b", byte);
+	}
+	io::printn();
+}
