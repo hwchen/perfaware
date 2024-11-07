@@ -27,6 +27,9 @@ fn void! decode(char[] instrs, String label) {
 	io::printfn("; %s disassembly:\nbits 16", label);
 	int i = 0;
 	while (i < instrs.len) {
+		$if $feature(DEBUG_TRACE_DECODE):
+			io::eprintfn("<DEBUG> === Start decode one instruction ===");
+		$endif
 		// opcode is highest 6 bits of first byte of instruction
 		char opcode = instrs[i] >> 2;
 		switch (opcode) {
@@ -46,7 +49,6 @@ fn void! decode(char[] instrs, String label) {
 						} else {
 							io::printfn("mov %s, %s", rrm, reg);
 						}
-						i += 2;
 					default:
 						int address_const;
 						switch (mod) {
@@ -62,16 +64,36 @@ fn void! decode(char[] instrs, String label) {
 						} else {
 							io::printfn("mov %s, %s", address, reg);
 						}
-						switch (mod) {
-							case 0b00: i += 2;
-							case 0b01: i += 3 + w;
-							case 0b10: i += 4;
-						}
 				}
+				int advance;
+				switch (mod) {
+					case 0b00: advance = 2;
+					case 0b01: advance = 3;
+					case 0b10: advance = 4;
+					case 0b11: advance = 2;
+					default: $$unreachable();
+				}
+				$if $feature(DEBUG_TRACE_DECODE):
+					io::printfn("<DEBUG> mod: %b", mod);
+					io::printf("<DEBUG> instruction(%d): %08b", advance, instrs[i]);
+					foreach (byte : instrs[i+1:advance-1]) {
+						io::printf("_%08b", byte);
+					}
+					if (i + advance < instrs.len) {
+						io::printf(" next: %08b", instrs[i+advance]);
+					}
+					io::printn();
+				$endif
+				i += advance;
 			default:
-				io::eprintfn("unrecognized opcode: %b", opcode);
+				$if $feature(DEBUG_TRACE_DECODE):
+					io::eprintfn("<DEBUG> unrecognized opcode: %b", opcode);
+				$endif
 				return DecodeError.UNRECOGNIZED_OPCODE?;
 		}
+		$if $feature(DEBUG_TRACE_DECODE):
+			io::eprintfn("<DEBUG> === End decode one instruction ===");
+		$endif
 	}
 }
 

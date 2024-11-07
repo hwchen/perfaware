@@ -1,3 +1,4 @@
+# `-D DEBUG_TRACE_DECODE` prints debug logs for decoding
 @sim86-build *args="":
     c3c compile sim86.c3 {{args}} 1>&2
 
