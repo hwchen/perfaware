@@ -203,9 +203,9 @@ const EffectiveAddressCalc[] EFFECTIVE_ADDRESS = {
 };
 
 fn void debug_bytes(char[] bytes) {
-	io::printf("<DEBUG> bytes(%d): %08b", bytes.len, bytes[0]);
+	io::eprintf("<DEBUG> bytes(%d): %08b", bytes.len, bytes[0]);
 	foreach (byte : bytes[1..]) {
-		io::printf("_%08b", byte);
+		io::eprintf("_%08b", byte);
 	}
-	io::printn();
+	io::eprintn("");
 }
