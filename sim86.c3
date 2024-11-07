@@ -128,10 +128,30 @@ fn void! decode(char[] instrs, String label) {
 			case instrs[i] >> 4 == 0b1011: // mov immediate-to-register
 				int w = (0b00001000 & instrs[i]) >> 3;
 				String reg = REGISTERS[0b00000111 & instrs[i]][w];
-				int immediate = (int)instrs[i+1];
+				int immediate = instrs[i+1];
 				if (w) immediate += instrs[i+2] << 8;
 				io::printfn("mov %s, %d", reg, immediate);
 				int advance = (w) ? 3 : 2;
+				$if $feature(DEBUG_TRACE_DECODE):
+					debug_bytes(instrs[i:advance]);
+				$endif
+				i += advance;
+			case instrs[i] >> 1 == 0b1010000: // mov mem to accumulator
+				int w = 0b00000001 & instrs[i];
+				String reg = (w) ? "ax" : "al";
+				int address = instrs[i+1] + (instrs[i+2] << 8);
+				io::printfn("mov %s, [%d]", reg, address);
+				int advance = 3;
+				$if $feature(DEBUG_TRACE_DECODE):
+					debug_bytes(instrs[i:advance]);
+				$endif
+				i += advance;
+			case instrs[i] >> 1 == 0b1010001: // mov accumulator to mem
+				int w = 0b00000001 & instrs[i];
+				String reg = (w) ? "ax" : "al";
+				int address = instrs[i+1] + (instrs[i+2] << 8);
+				io::printfn("mov [%d], %s", address, reg);
+				int advance = 3;
 				$if $feature(DEBUG_TRACE_DECODE):
 					debug_bytes(instrs[i:advance]);
 				$endif
