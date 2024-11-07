@@ -51,7 +51,10 @@ fn void! decode(char[] instrs, String label) {
 					default: // rm is effective address
 						int address_const;
 						switch (mod) {
-							case 0b00: address_const = 0;
+							case 0b00:
+								if (rm == 0b110) {
+									address_const = instrs[i+2] + (instrs[i+3] << 8);
+								}
 							case 0b01: address_const = (int)instrs[i+2];
 							case 0b10: address_const = (int)instrs[i+2] + (instrs[i+3] << 8);
 						}
@@ -66,7 +69,11 @@ fn void! decode(char[] instrs, String label) {
 				}
 				int advance;
 				switch (mod) {
-					case 0b00: advance = 2;
+					case 0b00:
+						advance = 2;
+						if (rm == 0b110) {
+							advance = 4;
+						}
 					case 0b01: advance = 3;
 					case 0b10: advance = 4;
 					case 0b11: advance = 2;
@@ -82,7 +89,11 @@ fn void! decode(char[] instrs, String label) {
 				int mod = (0b11000000 & instrs[i+1]) >> 6;
 				int displacement;
 				switch (mod) {
-					case 0b00: displacement = 0;
+					case 0b00:
+						displacement = 0;
+						if (rm == 0b110) {
+							displacement = 2;
+						}
 					case 0b01: displacement = 1;
 					case 0b10: displacement = 2;
 					case 0b11: displacement = 0;
@@ -98,9 +109,12 @@ fn void! decode(char[] instrs, String label) {
 					default: // rm is effective address
 						int address_const;
 						switch (mod) {
-							case 0b00: address_const = 0;
-							case 0b01: address_const = (int)instrs[i+2];
-							case 0b10: address_const = (int)instrs[i+2] + (instrs[i+3] << 8);
+							case 0b00:
+								if (rm == 0b110) {
+									address_const = instrs[i+2] + (instrs[i+3] << 8);
+								}
+							case 0b01: address_const = instrs[i+2];
+							case 0b10: address_const = instrs[i+2] + (instrs[i+3] << 8);
 						}
 						String address_format = EFFECTIVE_ADDRESS[rm][(int)(mod>=1)];
 						String address = string::tformat(address_format, address_const);
