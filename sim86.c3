@@ -122,14 +122,14 @@ distinct EffectiveAddressCalc = String[2];
 // MOD=01: + D8
 // MOD=10: + D16
 const EffectiveAddressCalc[] EFFECTIVE_ADDRESS = {
-	[0b000] = { "[BX+SI]", "[BX+SI+%d]" },
-	[0b001] = { "[BX+DI]", "[BX+DI+%d]" },
-	[0b010] = { "[BP+SI]", "[BP+SI+%d]" },
-	[0b011] = { "[BP+DI]", "[BP+DI+%d]" },
-	[0b100] = { "[SI]",    "[SI+%d]" },
-	[0b101] = { "[DI]",    "[DI+%d]" },
-	[0b110] = { "[%d]",    "[BP+%d]" },
-	[0b111] = { "[BX]",    "[BX+%d]" },
+	[0b000] = { "[bx+si]", "[bx+si+%d]" },
+	[0b001] = { "[bx+di]", "[bx+di+%d]" },
+	[0b010] = { "[bp+si]", "[bp+si+%d]" },
+	[0b011] = { "[bp+di]", "[bp+di+%d]" },
+	[0b100] = { "[si]",    "[si+%d]" },
+	[0b101] = { "[di]",    "[di+%d]" },
+	[0b110] = { "[%d]",    "[bp+%d]" },
+	[0b111] = { "[bx]",    "[bx+%d]" },
 };
 
 fn void debug_bytes(char[] bytes) {
