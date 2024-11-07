@@ -49,14 +49,14 @@ fn void! decode(char[] instrs, String label) {
 							io::printfn("mov %s, %s", rrm, reg);
 						}
 					default: // rm is effective address
-						int address_const;
+						short address_const;
 						switch (mod) {
 							case 0b00:
 								if (rm == 0b110) {
-									address_const = instrs[i+2] + (instrs[i+3] << 8);
+									address_const = instrs[i+2] | (instrs[i+3] << 8);
 								}
-							case 0b01: address_const = (int)instrs[i+2];
-							case 0b10: address_const = (int)instrs[i+2] + (instrs[i+3] << 8);
+							case 0b01: address_const = (ichar)instrs[i+2];
+							case 0b10: address_const = instrs[i+2] | (instrs[i+3] << 8);
 						}
 						String address_format = EFFECTIVE_ADDRESS[rm][(int)(mod>=1)];
 						String address = string::tformat(address_format, address_const);
@@ -99,8 +99,8 @@ fn void! decode(char[] instrs, String label) {
 					case 0b11: displacement = 0;
 					default: $$unreachable();
 				}
-				int immediate = instrs[i+2+displacement];
-				if (w) immediate += instrs[i+3+displacement] << 8;
+				short immediate = (ichar)instrs[i+2+displacement];
+				if (w) immediate |= instrs[i+3+displacement] << 8;
 				String width = (w) ? "word" : "byte";
 				// check MOD
 				switch (mod) {
@@ -108,14 +108,14 @@ fn void! decode(char[] instrs, String label) {
 						String rrm = REGISTERS[rm][w];
 						io::printfn("mov %s, %s %s", rrm, width, immediate);
 					default: // rm is effective address
-						int address_const;
+						short address_const;
 						switch (mod) {
 							case 0b00:
 								if (rm == 0b110) {
-									address_const = instrs[i+2] + (instrs[i+3] << 8);
+									address_const = instrs[i+2] | (instrs[i+3] << 8);
 								}
-							case 0b01: address_const = instrs[i+2];
-							case 0b10: address_const = instrs[i+2] + (instrs[i+3] << 8);
+							case 0b01: address_const = (ichar)instrs[i+2];
+							case 0b10: address_const = instrs[i+2] | (instrs[i+3] << 8);
 						}
 						String address_format = EFFECTIVE_ADDRESS[rm][(int)(mod>=1)];
 						String address = string::tformat(address_format, address_const);
@@ -129,8 +129,8 @@ fn void! decode(char[] instrs, String label) {
 			case instrs[i] >> 4 == 0b1011: // mov immediate-to-register
 				int w = (0b00001000 & instrs[i]) >> 3;
 				String reg = REGISTERS[0b00000111 & instrs[i]][w];
-				int immediate = instrs[i+1];
-				if (w) immediate += instrs[i+2] << 8;
+				short immediate = (ichar)instrs[i+1];
+				if (w) immediate |= instrs[i+2] << 8;
 				io::printfn("mov %s, %d", reg, immediate);
 				int advance = (w) ? 3 : 2;
 				$if $feature(DEBUG_TRACE_DECODE):
@@ -140,7 +140,7 @@ fn void! decode(char[] instrs, String label) {
 			case instrs[i] >> 1 == 0b1010000: // mov mem to accumulator
 				int w = 0b00000001 & instrs[i];
 				String reg = (w) ? "ax" : "al";
-				int address = instrs[i+1] + (instrs[i+2] << 8);
+				short address = instrs[i+1] | (instrs[i+2] << 8);
 				io::printfn("mov %s, [%d]", reg, address);
 				int advance = 3;
 				$if $feature(DEBUG_TRACE_DECODE):
@@ -150,7 +150,7 @@ fn void! decode(char[] instrs, String label) {
 			case instrs[i] >> 1 == 0b1010001: // mov accumulator to mem
 				int w = 0b00000001 & instrs[i];
 				String reg = (w) ? "ax" : "al";
-				int address = instrs[i+1] + (instrs[i+2] << 8);
+				short address = instrs[i+1] | (instrs[i+2] << 8);
 				io::printfn("mov [%d], %s", address, reg);
 				int advance = 3;
 				$if $feature(DEBUG_TRACE_DECODE):
