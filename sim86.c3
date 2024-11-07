@@ -100,12 +100,13 @@ fn void! decode(char[] instrs, String label) {
 					default: $$unreachable();
 				}
 				int immediate = instrs[i+2+displacement];
-				if (w) immediate += (instrs[i+3+displacement] << 8);
+				if (w) immediate += instrs[i+3+displacement] << 8;
+				String width = (w) ? "word" : "byte";
 				// check MOD
 				switch (mod) {
 					case 0b11: // rm is a register
 						String rrm = REGISTERS[rm][w];
-						io::printfn("mov %s, %s", rrm, immediate);
+						io::printfn("mov %s, %s %s", rrm, width, immediate);
 					default: // rm is effective address
 						int address_const;
 						switch (mod) {
@@ -118,7 +119,7 @@ fn void! decode(char[] instrs, String label) {
 						}
 						String address_format = EFFECTIVE_ADDRESS[rm][(int)(mod>=1)];
 						String address = string::tformat(address_format, address_const);
-						io::printfn("mov %s, %s", address, immediate);
+						io::printfn("mov %s, %s %s", address, width, immediate);
 				}
 				int advance = 2 + displacement + w + 1;
 				$if $feature(DEBUG_TRACE_DECODE):
