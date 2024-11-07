@@ -100,7 +100,7 @@ fn void! decode(char[] instrs, String label) {
 					default: $$unreachable();
 				}
 				int immediate = instrs[i+2+displacement];
-				if (w) immediate += (instrs[i+2+displacement] << 8);
+				if (w) immediate += (instrs[i+3+displacement] << 8);
 				// check MOD
 				switch (mod) {
 					case 0b11: // rm is a register
