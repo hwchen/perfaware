@@ -108,7 +108,7 @@ fn void! next_instr(char[]* instrs_input, Instruction* decoded) {
 		case instrs[0] >> 4 == 0b1011: // mov immediate-to-register
 			int w = (0b00001000 & instrs[0]) >> 3;
 			int reg_bits = 0b00000111 & instrs[0];
-			Register reg = register::REGISTER_FIELD_ENCODING[reg_bits][w];
+			Register reg = register::FIELD_ENCODING[reg_bits][w];
 			*decoded = {
 				.op = MOV,
 				.dest = { .type = REGISTER, .register = reg },
@@ -116,26 +116,24 @@ fn void! next_instr(char[]* instrs_input, Instruction* decoded) {
 			};
 			decoded.writen(io::stdout())!;
 			advance = (w) ? 3 : 2;
+
 		case instrs[0] >> 1 == 0b1010000: // mov mem to accumulator
-			int w = 0b00000001 & instrs[0];
-			Register reg = register::REGISTER_FIELD_ENCODING[0b000][w];
-			short address = bytes_to_short(instrs[1:2]);
-			*decoded = {
-				.op = MOV,
-				.dest = { .type = REGISTER, .register = reg },
-				.source = { .type = EFFECTIVE_ADDRESS_EXPRESSION, .address = { .displacement = bytes_to_short(instrs[1:w+1]) } },
-			};
-			decoded.writen(io::stdout())!;
-			advance = 3;
 		case instrs[0] >> 1 == 0b1010001: // mov accumulator to mem
 			int w = 0b00000001 & instrs[0];
-			Register reg = register::REGISTER_FIELD_ENCODING[0b000][w];
-			short address = bytes_to_short(instrs[1:2]);
-			*decoded = {
-				.op = MOV,
-				.dest = { .type = EFFECTIVE_ADDRESS_EXPRESSION, .address = { .displacement = bytes_to_short(instrs[1:w+1]) } },
-				.source = { .type = REGISTER, .register = reg },
+			Operand reg = { .type = REGISTER, .register = register::FIELD_ENCODING[0][w] };
+			Operand address = {
+				.type = ADDR_EXPR,
+				.address = { .displacement = bytes_to_short(instrs[1:2]) }
 			};
+			decoded.op = MOV;
+			switch {
+				case instrs[0] >> 1 == 0b1010000: // mov mem to accumulator
+					decoded.dest = reg;
+					decoded.source = address;
+				case instrs[0] >> 1 == 0b1010001: // mov accumulator to mem
+					decoded.dest = address;
+					decoded.source = reg;
+			}
 			decoded.writen(io::stdout())!;
 			advance = 3;
 		default:

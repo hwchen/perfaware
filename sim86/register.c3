@@ -41,9 +41,9 @@ const Register REG_SS   = { .name = SS,    .width = NONE };
 const Register REG_DS   = { .name = DS,    .width = NONE };
 const Register REG_IP   = { .name = IP,    .width = NONE };
 
-def RegisterFieldEncodingRow = Register[2];
+def FieldEncodingRow = Register[2];
 
-const RegisterFieldEncodingRow[] REGISTER_FIELD_ENCODING = {
+const FieldEncodingRow[] FIELD_ENCODING = {
 	[0b000] = {REG_AL, REG_AX},
 	[0b001] = {REG_CL, REG_CX},
 	[0b010] = {REG_DL, REG_DX},

@@ -16,19 +16,19 @@ enum Operation {
 struct Operand {
 	OperandType type;
 	union {
-		EffectiveAddressExpression address;
+		AddrExpr address;
 		Register register;
 		short immediate;
 	}
 }
 
 enum OperandType {
-	EFFECTIVE_ADDRESS_EXPRESSION,
+	ADDR_EXPR,
 	REGISTER,
 	IMMEDIATE,
 }
 
-struct EffectiveAddressExpression {
+struct AddrExpr {
 	Register[2] registers;
 	short displacement;
 }
@@ -47,7 +47,7 @@ fn void! Instruction.writen(&instr, OutStream out) {
 
 fn void! Operand.write(&operand, OutStream out) {
 	switch (operand.type) {
-		case EFFECTIVE_ADDRESS_EXPRESSION:
+		case ADDR_EXPR:
 			io::fprintf(out, "[")!;
 			// Hack to use ZERO as "null" since we dont write it out in instructions?
 			if (operand.address.registers[0].name != RegisterNames.ZERO) {
@@ -84,7 +84,7 @@ fn void test_instruction_write_address() @test {
 		.op = MOV,
 		.dest = { .type = REGISTER, .register = REG_CX },
 		.source = {
-			.type = EFFECTIVE_ADDRESS_EXPRESSION,
+			.type = ADDR_EXPR,
 			.address = {
 				.registers = { REG_SI, REG_ZERO },
 				.displacement = 2555,
