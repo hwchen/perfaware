@@ -40,6 +40,11 @@ fn void! Instruction.write(&instr, OutStream out) {
 	instr.source.write(out)!;
 }
 
+fn void! Instruction.writen(&instr, OutStream out) {
+	instr.write(out)!;
+	io::printfn("", out)!;
+}
+
 fn void! Operand.write(&operand, OutStream out) {
 	switch (operand.type) {
 		case EFFECTIVE_ADDRESS_EXPRESSION:
@@ -53,7 +58,7 @@ fn void! Operand.write(&operand, OutStream out) {
 			io::fprintf(out, "+%d", operand.address.displacement)!;
 			io::fprintf(out, "]")!;
 		case REGISTER: operand.register.write(out)!;
-		case IMMEDIATE: io::fprintf(out, "%d, ", operand.immediate)!;
+		case IMMEDIATE: io::fprintf(out, "%d", operand.immediate)!;
 	}
 }
 
@@ -61,20 +66,8 @@ fn void test_instruction_write_register() @test {
 	String expected = "MOV CX, BX";
 	Instruction instr = {
 		.op = MOV,
-		.dest = {
-			.type = REGISTER,
-			.register = {
-				.name = C,
-				.width = X,
-			},
-		},
-		.source = {
-			.type = REGISTER,
-			.register = {
-				.name = B,
-				.width = X,
-			}
-		},
+		.dest = { .type = REGISTER, .register = REG_CX },
+		.source = { .type = REGISTER, .register = REG_BX },
 	};
 	ByteWriter wtr;
 	wtr.temp_init();
@@ -87,20 +80,11 @@ fn void test_instruction_write_address() @test {
 	String expected = "MOV CX, [SI+2555]";
 	Instruction instr = {
 		.op = MOV,
-		.dest = {
-			.type = REGISTER,
-			.register = {
-				.name = C,
-				.width = X,
-			},
-		},
+		.dest = { .type = REGISTER, .register = REG_CX },
 		.source = {
 			.type = EFFECTIVE_ADDRESS_EXPRESSION,
 			.address = {
-				.registers = {
-					{ .name = SI, .width = NONE },
-					{ .name = ZERO, .width = NONE}
-				},
+				.registers = { REG_SI, REG_ZERO },
 				.displacement = 2555,
 			}
 		},

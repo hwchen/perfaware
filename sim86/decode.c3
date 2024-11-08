@@ -1,6 +1,12 @@
 module decode;
 import std::io;
 import std::core::string;
+import instruction;
+import register;
+
+fault DecodeError {
+	UNRECOGNIZED_OPCODE,
+}
 
 fn void! decode(char[] instrs, String label) {
 	io::printfn("; %s disassembly:\nbits 16", label);
@@ -111,14 +117,10 @@ fn void! decode(char[] instrs, String label) {
 				i += advance;
 			case instrs[i] >> 4 == 0b1011: // mov immediate-to-register
 				int w = (0b00001000 & instrs[i]) >> 3;
-				String reg = REGISTERS[0b00000111 & instrs[i]][w];
-				short immediate;
-				if (w) {
-					immediate = ble_to_short(instrs[i+1:2]);
-				} else {
-					immediate = char_to_short(instrs[i+1]);
-				}
-				io::printfn("mov %s, %d", reg, immediate);
+				int reg_bits = 0b00000111 & instrs[i];
+				Register reg = register::REGISTER_FIELD_ENCODING[reg_bits][w];
+				Instruction decoded = immediate_to_register(MOV, w, reg, instrs[i+1..]);
+				decoded.writen(io::stdout())!;
 				int advance = (w) ? 3 : 2;
 				$if $feature(DEBUG_TRACE_DECODE):
 					debug_bytes(instrs[i:advance]);
@@ -153,8 +155,18 @@ fn void! decode(char[] instrs, String label) {
 	}
 }
 
-fault DecodeError {
-	UNRECOGNIZED_OPCODE,
+fn Instruction immediate_to_register(Operation op, int w, Register reg, char[] data_bytes) {
+	short immediate;
+	if (w) {
+		immediate = ble_to_short(data_bytes[0:2]);
+	} else {
+		immediate = char_to_short(data_bytes[0]);
+	}
+	Instruction decoded;
+	decoded.op = op;
+	decoded.dest = { .type = REGISTER, .register = reg };
+	decoded.source = { .type = IMMEDIATE, .immediate = immediate };
+	return decoded;
 }
 
 // w=0, w=1
