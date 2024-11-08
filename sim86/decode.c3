@@ -38,10 +38,10 @@ fn void! decode(char[] instrs, String label) {
 						switch (mod) {
 							case 0b00:
 								if (rm == 0b110) {
-									address_const = ble_to_short(instrs[i+2:2]);
+									address_const = bytes_to_short(instrs[i+2:2]);
 								}
-							case 0b01: address_const = char_to_short(instrs[i+2]);
-							case 0b10: address_const = ble_to_short(instrs[i+2:2]);
+							case 0b01: address_const = bytes_to_short(instrs[i+2:1]);
+							case 0b10: address_const = bytes_to_short(instrs[i+2:2]);
 						}
 						String address_format = EFFECTIVE_ADDRESS[rm][(int)(mod>=1)];
 						String address = string::tformat(address_format, address_const);
@@ -86,9 +86,9 @@ fn void! decode(char[] instrs, String label) {
 				}
 				short immediate;
 				if (w) {
-					immediate = ble_to_short(instrs[i+2+displacement:2]);
+					immediate = bytes_to_short(instrs[i+2+displacement:2]);
 				} else {
-					immediate = char_to_short(instrs[i+2+displacement]);
+					immediate = bytes_to_short(instrs[i+2+displacement:1]);
 				}
 				String width = (w) ? "word" : "byte";
 				// check MOD
@@ -101,10 +101,10 @@ fn void! decode(char[] instrs, String label) {
 						switch (mod) {
 							case 0b00:
 								if (rm == 0b110) {
-									address_const = ble_to_short(instrs[i+2:2]);
+									address_const = bytes_to_short(instrs[i+2:2]);
 								}
 							case 0b01: address_const = (ichar)instrs[i+2];
-							case 0b10: address_const = ble_to_short(instrs[i+2:2]);
+							case 0b10: address_const = bytes_to_short(instrs[i+2:2]);
 						}
 						String address_format = EFFECTIVE_ADDRESS[rm][(int)(mod>=1)];
 						String address = string::tformat(address_format, address_const);
@@ -119,7 +119,11 @@ fn void! decode(char[] instrs, String label) {
 				int w = (0b00001000 & instrs[i]) >> 3;
 				int reg_bits = 0b00000111 & instrs[i];
 				Register reg = register::REGISTER_FIELD_ENCODING[reg_bits][w];
-				Instruction decoded = immediate_to_register(MOV, w, reg, instrs[i+1..]);
+				Instruction decoded = {
+					.op = MOV,
+					.dest = { .type = REGISTER, .register = reg },
+					.source = { .type = IMMEDIATE, .immediate = bytes_to_short(instrs[i+1:w+1]) },
+				};
 				decoded.writen(io::stdout())!;
 				int advance = (w) ? 3 : 2;
 				$if $feature(DEBUG_TRACE_DECODE):
@@ -129,7 +133,7 @@ fn void! decode(char[] instrs, String label) {
 			case instrs[i] >> 1 == 0b1010000: // mov mem to accumulator
 				int w = 0b00000001 & instrs[i];
 				String reg = (w) ? "ax" : "al";
-				short address = ble_to_short(instrs[i+1:2]);
+				short address = bytes_to_short(instrs[i+1:2]);
 				io::printfn("mov %s, [%d]", reg, address);
 				int advance = 3;
 				$if $feature(DEBUG_TRACE_DECODE):
@@ -139,7 +143,7 @@ fn void! decode(char[] instrs, String label) {
 			case instrs[i] >> 1 == 0b1010001: // mov accumulator to mem
 				int w = 0b00000001 & instrs[i];
 				String reg = (w) ? "ax" : "al";
-				short address = ble_to_short(instrs[i+1:2]);
+				short address = bytes_to_short(instrs[i+1:2]);
 				io::printfn("mov [%d], %s", address, reg);
 				int advance = 3;
 				$if $feature(DEBUG_TRACE_DECODE):
@@ -153,20 +157,6 @@ fn void! decode(char[] instrs, String label) {
 			io::eprintfn("<DEBUG> === End decode one instruction ===");
 		$endif
 	}
-}
-
-fn Instruction immediate_to_register(Operation op, int w, Register reg, char[] data_bytes) {
-	short immediate;
-	if (w) {
-		immediate = ble_to_short(data_bytes[0:2]);
-	} else {
-		immediate = char_to_short(data_bytes[0]);
-	}
-	Instruction decoded;
-	decoded.op = op;
-	decoded.dest = { .type = REGISTER, .register = reg };
-	decoded.source = { .type = IMMEDIATE, .immediate = immediate };
-	return decoded;
 }
 
 // w=0, w=1
@@ -201,14 +191,15 @@ const EffectiveAddressCalc[] EFFECTIVE_ADDRESS = {
 	[0b111] = { "[bx]",    "[bx+%d]" },
 };
 
-// second byte is most significant
-fn short ble_to_short(char[] bytes) @inline {
-	assert(bytes.len == 2);
-	return bytes[0] | (bytes[1] << 8);
-}
-
-fn short char_to_short(char c) @inline {
-		return (ichar)c;
+fn short bytes_to_short(char[] bytes) @inline {
+	assert(bytes.len > 0); // No reason to call if no bytes
+	assert(bytes.len <= 2);
+	if (bytes.len == 2) {
+		// second byte is most significant
+		return bytes[0] | (bytes[1] << 8);
+	} else {
+		return (ichar)bytes[0];
+	}
 }
 
 fn void debug_bytes(char[] bytes) {
