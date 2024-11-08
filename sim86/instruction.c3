@@ -49,8 +49,10 @@ fn void! Operand.write(&operand, OutStream out) {
 	switch (operand.type) {
 		case EFFECTIVE_ADDRESS_EXPRESSION:
 			io::fprintf(out, "[")!;
-			operand.address.registers[0].write(out)!;
 			// Hack to use ZERO as "null" since we dont write it out in instructions?
+			if (operand.address.registers[0].name != RegisterNames.ZERO) {
+				operand.address.registers[0].write(out)!;
+			}
 			if (operand.address.registers[1].name != RegisterNames.ZERO) {
 				io::fprintf(out, "+")!;
 				operand.address.registers[1].write(out)!;
