@@ -17,3 +17,6 @@ sim86-test-one path:
         echo ". - {{path}}"
     fi
     rm {{path}}.test.asm {{path}}.test
+
+@sim86-test-unit:
+    c3c compile-test sim86/*
