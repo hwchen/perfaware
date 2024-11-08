@@ -62,6 +62,7 @@ fn void! next_instr(char[]* instrs_input, Instruction* decoded) {
 				case 0b11: advance = 2;
 				default: $$unreachable();
 			}
+
 		case instrs[0] >> 1 == 0b1100011: // mov immediate to register/memory
 			int w = 0b00000001 & instrs[0];
 			int rm = 0b00000111 & instrs[1];
@@ -105,6 +106,7 @@ fn void! next_instr(char[]* instrs_input, Instruction* decoded) {
 					io::printfn("mov %s, %s %s", address, width, immediate);
 			}
 			advance = 2 + displacement + w + 1;
+
 		case instrs[0] >> 4 == 0b1011: // mov immediate-to-register
 			int w = (0b00001000 & instrs[0]) >> 3;
 			int reg_bits = 0b00000111 & instrs[0];
@@ -136,6 +138,7 @@ fn void! next_instr(char[]* instrs_input, Instruction* decoded) {
 			}
 			decoded.writen(io::stdout())!;
 			advance = 3;
+
 		default:
 			return DecodeError.UNRECOGNIZED_OPCODE?;
 	}
