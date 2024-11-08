@@ -16,6 +16,7 @@ fn void! decode(char[] instrs, String label) {
 			io::eprintfn("<DEBUG> === Start decode one instruction ===");
 			io::eprintfn("<DEBUG> first byte: %08b", instrs[i]);
 		$endif
+		int advance = 0;
 		switch {
 			case instrs[i] >> 2 == 0b100010: // mov
 				int d = (0b00000010 & instrs[i]) >> 1;
@@ -52,7 +53,6 @@ fn void! decode(char[] instrs, String label) {
 							io::printfn("mov %s, %s", address, reg);
 						}
 				}
-				int advance;
 				switch (mod) {
 					case 0b00:
 						advance = 2;
@@ -64,10 +64,6 @@ fn void! decode(char[] instrs, String label) {
 					case 0b11: advance = 2;
 					default: $$unreachable();
 				}
-				$if $feature(DEBUG_TRACE_DECODE):
-					debug_bytes(instrs[i:advance]);
-				$endif
-				i += advance;
 			case instrs[i] >> 1 == 0b1100011: // mov immediate to register/memory
 				int w = 0b00000001 & instrs[i];
 				int rm = 0b00000111 & instrs[i+1];
@@ -110,11 +106,7 @@ fn void! decode(char[] instrs, String label) {
 						String address = string::tformat(address_format, address_const);
 						io::printfn("mov %s, %s %s", address, width, immediate);
 				}
-				int advance = 2 + displacement + w + 1;
-				$if $feature(DEBUG_TRACE_DECODE):
-					debug_bytes(instrs[i:advance]);
-				$endif
-				i += advance;
+				advance = 2 + displacement + w + 1;
 			case instrs[i] >> 4 == 0b1011: // mov immediate-to-register
 				int w = (0b00001000 & instrs[i]) >> 3;
 				int reg_bits = 0b00000111 & instrs[i];
@@ -125,37 +117,27 @@ fn void! decode(char[] instrs, String label) {
 					.source = { .type = IMMEDIATE, .immediate = bytes_to_short(instrs[i+1:w+1]) },
 				};
 				decoded.writen(io::stdout())!;
-				int advance = (w) ? 3 : 2;
-				$if $feature(DEBUG_TRACE_DECODE):
-					debug_bytes(instrs[i:advance]);
-				$endif
-				i += advance;
+				advance = (w) ? 3 : 2;
 			case instrs[i] >> 1 == 0b1010000: // mov mem to accumulator
 				int w = 0b00000001 & instrs[i];
 				String reg = (w) ? "ax" : "al";
 				short address = bytes_to_short(instrs[i+1:2]);
 				io::printfn("mov %s, [%d]", reg, address);
-				int advance = 3;
-				$if $feature(DEBUG_TRACE_DECODE):
-					debug_bytes(instrs[i:advance]);
-				$endif
-				i += advance;
+				advance = 3;
 			case instrs[i] >> 1 == 0b1010001: // mov accumulator to mem
 				int w = 0b00000001 & instrs[i];
 				String reg = (w) ? "ax" : "al";
 				short address = bytes_to_short(instrs[i+1:2]);
 				io::printfn("mov [%d], %s", address, reg);
-				int advance = 3;
-				$if $feature(DEBUG_TRACE_DECODE):
-					debug_bytes(instrs[i:advance]);
-				$endif
-				i += advance;
+				advance = 3;
 			default:
 				return DecodeError.UNRECOGNIZED_OPCODE?;
 		}
 		$if $feature(DEBUG_TRACE_DECODE):
+			debug_bytes(instrs[i:advance]);
 			io::eprintfn("<DEBUG> === End decode one instruction ===");
 		$endif
+		i += advance;
 	}
 }
 
