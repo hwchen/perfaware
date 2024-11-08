@@ -118,15 +118,25 @@ fn void! next_instr(char[]* instrs_input, Instruction* decoded) {
 			advance = (w) ? 3 : 2;
 		case instrs[0] >> 1 == 0b1010000: // mov mem to accumulator
 			int w = 0b00000001 & instrs[0];
-			String reg = (w) ? "ax" : "al";
+			Register reg = register::REGISTER_FIELD_ENCODING[0b000][w];
 			short address = bytes_to_short(instrs[1:2]);
-			io::printfn("mov %s, [%d]", reg, address);
+			*decoded = {
+				.op = MOV,
+				.dest = { .type = REGISTER, .register = reg },
+				.source = { .type = EFFECTIVE_ADDRESS_EXPRESSION, .address = { .displacement = bytes_to_short(instrs[1:w+1]) } },
+			};
+			decoded.writen(io::stdout())!;
 			advance = 3;
 		case instrs[0] >> 1 == 0b1010001: // mov accumulator to mem
 			int w = 0b00000001 & instrs[0];
-			String reg = (w) ? "ax" : "al";
+			Register reg = register::REGISTER_FIELD_ENCODING[0b000][w];
 			short address = bytes_to_short(instrs[1:2]);
-			io::printfn("mov [%d], %s", address, reg);
+			*decoded = {
+				.op = MOV,
+				.dest = { .type = EFFECTIVE_ADDRESS_EXPRESSION, .address = { .displacement = bytes_to_short(instrs[1:w+1]) } },
+				.source = { .type = REGISTER, .register = reg },
+			};
+			decoded.writen(io::stdout())!;
 			advance = 3;
 		default:
 			return DecodeError.UNRECOGNIZED_OPCODE?;
