@@ -33,11 +33,6 @@ struct EffectiveAddressExpression {
 	short displacement;
 }
 
-struct Register {
-	RegisterNames name;
-	RegisterWidth width;
-}
-
 fn void! Instruction.write(&instr, OutStream out) {
 	io::fprintf(out, "%s ", instr.op.nameof)!;
 	instr.dest.write(out)!;
@@ -59,17 +54,6 @@ fn void! Operand.write(&operand, OutStream out) {
 			io::fprintf(out, "]")!;
 		case REGISTER: operand.register.write(out)!;
 		case IMMEDIATE: io::fprintf(out, "%d, ", operand.immediate)!;
-	}
-}
-
-fn void! Register.write(&reg, OutStream out) {
-	io::fprintf(out, "%s", reg.name.nameof)!;
-	switch (reg.name) {
-		case A:
-		case B:
-		case C:
-		case D: io::fprintf(out, "%s", reg.width.nameof)!;
-		default:
 	}
 }
 
@@ -127,4 +111,3 @@ fn void test_instruction_write_address() @test {
 	String input = wtr.str_view();
 	assert(input == expected, "Expected %s, found %s", expected, input);
 }
-
