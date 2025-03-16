@@ -68,8 +68,8 @@ fn void test_instruction_write_register() @test {
 	String expected = "MOV CX, BX";
 	Instruction instr = {
 		.op = MOV,
-		.dest = { .type = REGISTER, .register = register::REG_CX },
-		.source = { .type = REGISTER, .register = register::REG_BX },
+		.dest = { .type = REGISTER, .register = register::CX },
+		.source = { .type = REGISTER, .register = register::BX },
 	};
 	ByteWriter wtr;
 	wtr.tinit();
@@ -82,11 +82,11 @@ fn void test_instruction_write_address() @test {
 	String expected = "MOV CX, [SI+2555]";
 	Instruction instr = {
 		.op = MOV,
-		.dest = { .type = REGISTER, .register = register::REG_CX },
+		.dest = { .type = REGISTER, .register = register::CX },
 		.source = {
 			.type = ADDR_EXPR,
 			.address = {
-				.registers = { register::REG_SI, register::REG_ZERO },
+				.registers = { register::SI, register::ZERO },
 				.displacement = 2555,
 			}
 		},
