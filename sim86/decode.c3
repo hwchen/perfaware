@@ -4,11 +4,11 @@ import std::core::string;
 import instruction;
 import register;
 
-fault DecodeError {
+faultdef
 	UNRECOGNIZED_OPCODE,
-}
+;
 
-fn void! next_instr(char[]* instrs_input, Instruction* decoded) {
+fn void? next_instr(char[]* instrs_input, Instruction* decoded) {
 	char[] instrs = *instrs_input;
 	$if $feature(DEBUG_TRACE_DECODE):
 		io::eprintfn("<DEBUG> === Start decode one instruction ===");
@@ -140,7 +140,7 @@ fn void! next_instr(char[]* instrs_input, Instruction* decoded) {
 			advance = 3;
 
 		default:
-			return DecodeError.UNRECOGNIZED_OPCODE?;
+			return UNRECOGNIZED_OPCODE?;
 	}
 	$if $feature(DEBUG_TRACE_DECODE):
 		debug_bytes(instrs[0:advance]);
@@ -150,7 +150,7 @@ fn void! next_instr(char[]* instrs_input, Instruction* decoded) {
 }
 
 // w=0, w=1
-distinct RegisterFieldEncoding = String[2];
+typedef RegisterFieldEncoding = String[2];
 
 // REG, w=0, w=1
 const RegisterFieldEncoding[] REGISTERS = {
@@ -165,7 +165,7 @@ const RegisterFieldEncoding[] REGISTERS = {
 };
 
 
-distinct EffectiveAddressCalc = String[2];
+typedef EffectiveAddressCalc = String[2];
 
 // [R/M] = { MOD=00, MOD=01, MOD=10 }
 // MOD=01: + D8

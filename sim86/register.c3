@@ -7,7 +7,7 @@ struct Register {
 	RegisterWidth width;
 }
 
-fn void! Register.write(&reg, OutStream out) {
+fn void? Register.write(&reg, OutStream out) {
 	io::fprintf(out, "%s", reg.name.nameof)!;
 	switch (reg.name) {
 		case A:
@@ -41,7 +41,7 @@ const Register REG_SS   = { .name = SS,    .width = NONE };
 const Register REG_DS   = { .name = DS,    .width = NONE };
 const Register REG_IP   = { .name = IP,    .width = NONE };
 
-def FieldEncodingRow = Register[2];
+alias FieldEncodingRow = Register[2];
 
 const FieldEncodingRow[] FIELD_ENCODING = {
 	[0b000] = {REG_AL, REG_AX},
@@ -80,4 +80,4 @@ enum RegisterWidth {
 	X, // all
 }
 
-distinct RegisterState = EnumMap(<RegisterNames, ushort>);
+typedef RegisterState = EnumMap{RegisterNames, ushort};

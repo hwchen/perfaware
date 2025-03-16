@@ -33,19 +33,19 @@ struct AddrExpr {
 	short displacement;
 }
 
-fn void! Instruction.write(&instr, OutStream out) {
+fn void? Instruction.write(&instr, OutStream out) {
 	io::fprintf(out, "%s ", instr.op.nameof)!;
 	instr.dest.write(out)!;
 	io::fprintf(out, ", ")!;
 	instr.source.write(out)!;
 }
 
-fn void! Instruction.writen(&instr, OutStream out) {
+fn void? Instruction.writen(&instr, OutStream out) {
 	instr.write(out)!;
 	io::printfn("", out)!;
 }
 
-fn void! Operand.write(&operand, OutStream out) {
+fn void? Operand.write(&operand, OutStream out) {
 	switch (operand.type) {
 		case ADDR_EXPR:
 			io::fprintf(out, "[")!;
@@ -68,11 +68,11 @@ fn void test_instruction_write_register() @test {
 	String expected = "MOV CX, BX";
 	Instruction instr = {
 		.op = MOV,
-		.dest = { .type = REGISTER, .register = REG_CX },
-		.source = { .type = REGISTER, .register = REG_BX },
+		.dest = { .type = REGISTER, .register = register::REG_CX },
+		.source = { .type = REGISTER, .register = register::REG_BX },
 	};
 	ByteWriter wtr;
-	wtr.temp_init();
+	wtr.tinit();
 	instr.write(&wtr)!!;
 	String input = wtr.str_view();
 	assert(input == expected, "Expected %s, found %s", expected, input);
@@ -82,17 +82,17 @@ fn void test_instruction_write_address() @test {
 	String expected = "MOV CX, [SI+2555]";
 	Instruction instr = {
 		.op = MOV,
-		.dest = { .type = REGISTER, .register = REG_CX },
+		.dest = { .type = REGISTER, .register = register::REG_CX },
 		.source = {
 			.type = ADDR_EXPR,
 			.address = {
-				.registers = { REG_SI, REG_ZERO },
+				.registers = { register::REG_SI, register::REG_ZERO },
 				.displacement = 2555,
 			}
 		},
 	};
 	ByteWriter wtr;
-	wtr.temp_init();
+	wtr.tinit();
 	instr.write(&wtr)!!;
 	String input = wtr.str_view();
 	assert(input == expected, "Expected %s, found %s", expected, input);

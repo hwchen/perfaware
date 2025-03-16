@@ -11,7 +11,7 @@ fn int main(String[] args) {
 	}
 	String path = args[1];
 	char[4096 * 8] buf;
-	char[]! instrs = file::load_buffer(path, &buf);
+	char[]? instrs = file::load_buffer(path, &buf);
 	if (catch err = instrs) {
 		io::eprintfn("Error loading instructions: %s", err);
 		return 1;
